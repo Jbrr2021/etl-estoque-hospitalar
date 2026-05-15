@@ -41,9 +41,13 @@ O pipeline realiza as seguintes etapas:
 ```text
 etl-estoque-hospitalar/
 ├── data/
-│   └── raw/
-│       ├── materiais.csv
-│       └── movimentacoes.csv
+│   ├── raw/
+│   │   ├── materiais.csv
+│   │   └── movimentacoes.csv
+│   └── processed/
+│       ├── estoque_atual.csv
+│       ├── materiais_tratados.csv
+│       └── movimentacoes_tratadas.csv
 ├── database/
 │   └── estoque.db
 ├── sql/
@@ -51,9 +55,10 @@ etl-estoque-hospitalar/
 ├── src/
 │   ├── pipeline.py
 │   └── verificar_banco.py
+├── .gitignore
+├── README.md
 ├── requirements.txt
-├── teste_pandas.py
-└── README.md
+└── teste_pandas.py
 ```
 
 ---
@@ -68,6 +73,20 @@ Arquivos utilizados:
 
 - `materiais.csv`
 - `movimentacoes.csv`
+
+---
+
+### `data/processed/`
+
+Contém os arquivos tratados gerados automaticamente pelo pipeline após a etapa de transformação.
+
+Arquivos gerados:
+
+- `materiais_tratados.csv`
+- `movimentacoes_tratadas.csv`
+- `estoque_atual.csv`
+
+Essa camada representa os dados após padronização, validação, cálculo de estoque atual e preparação para análise.
 
 ---
 
@@ -199,15 +218,16 @@ pd.read_csv()
 
 ## 2. Transformação
 
-Durante a transformação dos dados, o pipeline realiza:
+O pipeline realiza as seguintes etapas:
 
-- Padronização de textos.
-- Conversão de campos de data.
-- Remoção de registros duplicados.
-- Tratamento de quantidades inválidas.
-- Criação da coluna `quantidade_ajustada`.
-- Cálculo do estoque atual por material.
-- Identificação de materiais abaixo do estoque mínimo.
+1. Extrai dados brutos de arquivos CSV.
+2. Trata e padroniza os dados com Python/Pandas.
+3. Valida a qualidade das informações.
+4. Calcula o estoque atual dos materiais.
+5. Identifica materiais abaixo do estoque mínimo.
+6. Salva os dados tratados na camada `data/processed/`.
+7. Carrega os dados tratados em um banco SQLite.
+8. Executa consultas SQL para análise dos dados.
 
 A regra principal é:
 
@@ -241,10 +261,24 @@ Caso esteja tudo correto, aparece a mensagem:
 ```text
 Validação concluída com sucesso.
 ```
-
 ---
 
-## 4. Carga
+## 4. Salvamento dos dados tratados
+
+Após a transformação e validação, o pipeline salva os dados tratados em arquivos CSV na camada `data/processed/`.
+
+Arquivos gerados:
+
+```text
+data/processed/materiais_tratados.csv
+data/processed/movimentacoes_tratadas.csv
+data/processed/estoque_atual.csv
+```
+
+Essa etapa permite visualizar os dados já tratados antes da carga no banco SQLite.
+---
+
+## 5. Carga
 
 Após a transformação e validação, os dados são carregados em um banco SQLite.
 
@@ -405,56 +439,20 @@ Esse script consulta o banco e exibe os resultados no terminal.
 
 ## Resultado obtido
 
-Após executar o pipeline e verificar o banco, foram criadas as seguintes tabelas:
-
 ```text
-dim_materiais
-fato_movimentacoes
-estoque_atual
+[INFO] Iniciando pipeline ETL...
+[INFO] Extraindo dados dos arquivos CSV...
+[INFO] Transformando dados...
+[INFO] Validando qualidade dos dados...
+[INFO] Validação concluída com sucesso.
+[INFO] Salvando dados tratados na pasta data/processed...
+[INFO] Arquivos tratados salvos com sucesso.
+[INFO] Carregando dados no banco SQLite...
+[INFO] Dados carregados com sucesso em: C:\Users\User\Documents\etl-estoque-hospitalar\database\estoque.db
+[INFO] Pipeline finalizado com sucesso.
 ```
 
-Resultado da tabela de estoque atual:
-
-```text
-nome                 categoria             estoque_atual   estoque_minimo   abaixo_minimo
-Luva descartável      EPI                  220             100              0
-Seringa 10ml          Material hospitalar  150             200              1
-Álcool 70             Limpeza              30              50               1
-Máscara cirúrgica     EPI                  130             150              1
-Compressa estéril     Material hospitalar  60              80               1
-```
-
-Materiais identificados abaixo do estoque mínimo:
-
-```text
-Seringa 10ml
-Álcool 70
-Máscara cirúrgica
-Compressa estéril
-```
-
-Total de saídas por setor:
-
-```text
-setor               total_saida
-Emergência          350
-Enfermaria          170
-Centro Cirúrgico    120
-Higienização        70
-```
-
-Movimentações por categoria:
-
-```text
-categoria             tipo      total
-EPI                   entrada   550
-EPI                   saida     200
-Limpeza               entrada   100
-Limpeza               saida     70
-Material hospitalar   entrada   650
-Material hospitalar   saida     440
-```
-
+Após essa execução, os arquivos tratados serão gerados na pasta `data/processed/` e o banco `estoque.db` será criado ou atualizado dentro da pasta `database/`.
 ---
 
 ## Consultas SQL utilizadas
@@ -614,6 +612,10 @@ Durante o desenvolvimento, foram concluídas com sucesso as seguintes etapas:
 - Execução de consultas SQL.
 - Validação dos resultados no terminal.
 - Documentação do projeto no README.
+- Criação da camada `data/processed/`.
+- Geração automática de arquivos CSV tratados.
+- Melhoria das mensagens de execução do pipeline com logs informativos.
+- Inclusão de validações adicionais, como tipos de movimentação inválidos e materiais não cadastrados.
 
 ---
 
@@ -686,12 +688,16 @@ Possíveis evoluções para este projeto:
 
 ## Status do projeto
 
-Projeto funcional.
-
 Pipeline executado com sucesso:
 
 ```text
-CSV → Python/Pandas → Transformação → Validação → SQLite → SQL
+CSV bruto → Python/Pandas → Transformação → Validação → CSV tratado → SQLite → SQL
+```
+
+Fluxo organizado em camadas:
+
+```text
+data/raw → data/processed → database
 ```
 
 ---
