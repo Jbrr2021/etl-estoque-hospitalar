@@ -1,0 +1,28 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Cache de ferramentas
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Variáveis de ambiente
+.env
+
+# Arquivos temporários e logs
+*.log
+*.tmp
+
+# Configurações locais do VS Code
+.vscode/
+
+# Banco SQLite gerado pelo pipeline
+database/*.db
