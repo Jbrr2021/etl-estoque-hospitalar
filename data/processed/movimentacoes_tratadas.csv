@@ -1,0 +1,11 @@
+﻿id_movimentacao,id_material,data_movimentacao,tipo,quantidade,setor,quantidade_ajustada
+1,1,2026-01-05,entrada,300,Almoxarifado,300
+2,1,2026-01-10,saida,80,Enfermaria,-80
+3,2,2026-01-06,entrada,500,Almoxarifado,500
+4,2,2026-01-15,saida,350,Emergência,-350
+5,3,2026-01-07,entrada,100,Almoxarifado,100
+6,3,2026-01-18,saida,70,Higienização,-70
+7,4,2026-01-08,entrada,250,Almoxarifado,250
+8,4,2026-01-20,saida,120,Centro Cirúrgico,-120
+9,5,2026-01-09,entrada,150,Almoxarifado,150
+10,5,2026-01-22,saida,90,Enfermaria,-90
