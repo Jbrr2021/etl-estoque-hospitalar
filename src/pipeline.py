@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 
@@ -11,13 +12,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 DATABASE_DIR = BASE_DIR / "database"
+LOGS_DIR = BASE_DIR / "logs"
 
 # Garante que as pastas existam antes de salvar arquivos
 PROCESSED_DIR.mkdir(exist_ok=True)
 DATABASE_DIR.mkdir(exist_ok=True)
+LOGS_DIR.mkdir(exist_ok=True)
 
-# Caminho do banco SQLite
+# Caminhos dos arquivos gerados
 DB_PATH = DATABASE_DIR / "estoque.db"
+METRICS_PATH = LOGS_DIR / "metricas_execucao.csv"
 
 
 def extract():
@@ -186,36 +190,125 @@ def load(materiais, movimentacoes, estoque_atual):
     print(f"[INFO] Dados carregados com sucesso em: {DB_PATH}")
 
 
+def save_metrics(
+    data_hora_execucao,
+    qtd_materiais_lidos,
+    qtd_movimentacoes_lidas,
+    qtd_materiais_tratados,
+    qtd_movimentacoes_tratadas,
+    qtd_materiais_abaixo_minimo,
+    status_execucao
+):
+    """Salva métricas de execução do pipeline em um arquivo CSV."""
+
+    print("[INFO] Salvando métricas de execução...")
+
+    # Cria um DataFrame com as métricas da execução atual
+    metricas = pd.DataFrame(
+        [
+            {
+                "data_hora_execucao": data_hora_execucao,
+                "qtd_materiais_lidos": qtd_materiais_lidos,
+                "qtd_movimentacoes_lidas": qtd_movimentacoes_lidas,
+                "qtd_materiais_tratados": qtd_materiais_tratados,
+                "qtd_movimentacoes_tratadas": qtd_movimentacoes_tratadas,
+                "qtd_materiais_abaixo_minimo": qtd_materiais_abaixo_minimo,
+                "status_execucao": status_execucao,
+            }
+        ]
+    )
+
+    # Se o arquivo já existir, adiciona a nova execução ao final
+    if METRICS_PATH.exists():
+        metricas.to_csv(
+            METRICS_PATH,
+            mode="a",
+            header=False,
+            index=False,
+            encoding="utf-8-sig"
+        )
+    else:
+        metricas.to_csv(
+            METRICS_PATH,
+            index=False,
+            encoding="utf-8-sig"
+        )
+
+    print(f"[INFO] Métricas salvas com sucesso em: {METRICS_PATH}")
+
+
 def run_pipeline():
     """Executa todas as etapas do pipeline ETL."""
 
     print("[INFO] Iniciando pipeline ETL...")
 
-    materiais, movimentacoes = extract()
+    # Registra a data e hora da execução
+    data_hora_execucao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    materiais, movimentacoes, estoque_atual = transform(
-        materiais,
-        movimentacoes
+    status_execucao = "SUCESSO"
+
+    try:
+        # Extração
+        materiais_raw, movimentacoes_raw = extract()
+
+        qtd_materiais_lidos = len(materiais_raw)
+        qtd_movimentacoes_lidas = len(movimentacoes_raw)
+
+        # Transformação
+        materiais, movimentacoes, estoque_atual = transform(
+            materiais_raw,
+            movimentacoes_raw
+        )
+
+        qtd_materiais_tratados = len(materiais)
+        qtd_movimentacoes_tratadas = len(movimentacoes)
+
+        qtd_materiais_abaixo_minimo = int(
+            estoque_atual["abaixo_minimo"].sum()
+        )
+
+        # Validação
+        validate(materiais, movimentacoes, estoque_atual)
+
+        # Salvamento dos arquivos tratados
+        save_processed_files(
+            materiais,
+            movimentacoes,
+            estoque_atual
+        )
+
+        # Carga no banco
+        load(
+            materiais,
+            movimentacoes,
+            estoque_atual
+        )
+
+    except Exception as erro:
+        status_execucao = f"ERRO: {erro}"
+
+        # Caso ocorra erro, tenta salvar o máximo de informação possível
+        qtd_materiais_lidos = 0
+        qtd_movimentacoes_lidas = 0
+        qtd_materiais_tratados = 0
+        qtd_movimentacoes_tratadas = 0
+        qtd_materiais_abaixo_minimo = 0
+
+        print(f"[ERRO] O pipeline falhou: {erro}")
+
+    # Salva as métricas mesmo se houver erro
+    save_metrics(
+        data_hora_execucao,
+        qtd_materiais_lidos,
+        qtd_movimentacoes_lidas,
+        qtd_materiais_tratados,
+        qtd_movimentacoes_tratadas,
+        qtd_materiais_abaixo_minimo,
+        status_execucao
     )
 
-    validate(materiais, movimentacoes, estoque_atual)
-
-    save_processed_files(
-        materiais,
-        movimentacoes,
-        estoque_atual
-    )
-
-    load(
-        materiais,
-        movimentacoes,
-        estoque_atual
-    )
-
-    print("[INFO] Pipeline finalizado com sucesso.")
+    print("[INFO] Pipeline finalizado.")
 
 
 if __name__ == "__main__":
     run_pipeline()
-
-
