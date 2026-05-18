@@ -2,7 +2,7 @@
 
 Este projeto simula um pipeline ETL para controle de estoque hospitalar, utilizando Python, Pandas, SQLite e SQL.
 
-A ideia do projeto é praticar conceitos fundamentais da área de Dados, como extração, transformação, validação, organização em camadas, carga em banco de dados e consultas SQL para análise.
+A ideia do projeto é praticar conceitos fundamentais da área de Dados, como extração, transformação, validação, organização em camadas, carga em banco de dados, consultas SQL para análise e registro de métricas de execução.
 
 O tema foi escolhido com base em uma experiência prática real em ambiente hospitalar, envolvendo controle de estoque, conferência de materiais, validade, entradas, saídas, organização de informações e apoio operacional.
 
@@ -21,7 +21,8 @@ O pipeline realiza as seguintes etapas:
 5. Identifica materiais abaixo do estoque mínimo.
 6. Salva os dados tratados na camada `data/processed/`.
 7. Carrega os dados tratados em um banco SQLite.
-8. Executa consultas SQL para análise dos dados.
+8. Registra métricas de execução na pasta `logs/`.
+9. Executa consultas SQL para análise dos dados.
 
 ---
 
@@ -51,6 +52,8 @@ etl-estoque-hospitalar/
 │       └── movimentacoes_tratadas.csv
 ├── database/
 │   └── estoque.db
+├── logs/
+│   └── metricas_execucao.csv
 ├── sql/
 │   └── consultas.sql
 ├── src/
@@ -102,6 +105,18 @@ Arquivo gerado:
 - `estoque.db`
 
 O banco contém as tabelas criadas pelo pipeline para consulta e análise dos dados.
+
+---
+
+### `logs/`
+
+Contém os registros de métricas de execução do pipeline.
+
+Arquivo gerado:
+
+- `metricas_execucao.csv`
+
+Esse arquivo armazena informações sobre cada execução do pipeline, como data e hora, quantidade de registros processados, quantidade de materiais abaixo do estoque mínimo e status da execução.
 
 ---
 
@@ -306,6 +321,35 @@ estoque_atual
 
 ---
 
+## 6. Registro de métricas de execução
+
+Após a execução do pipeline, são registradas métricas em um arquivo CSV localizado em:
+
+```text
+logs/metricas_execucao.csv
+```
+
+As métricas registradas são:
+
+- Data e hora da execução.
+- Quantidade de materiais lidos.
+- Quantidade de movimentações lidas.
+- Quantidade de materiais tratados.
+- Quantidade de movimentações tratadas.
+- Quantidade de materiais abaixo do estoque mínimo.
+- Status da execução.
+
+Exemplo de estrutura do arquivo:
+
+```csv
+data_hora_execucao,qtd_materiais_lidos,qtd_movimentacoes_lidas,qtd_materiais_tratados,qtd_movimentacoes_tratadas,qtd_materiais_abaixo_minimo,status_execucao
+2026-05-18 10:30:00,5,10,5,10,4,SUCESSO
+```
+
+Cada nova execução do pipeline adiciona uma nova linha ao arquivo de métricas.
+
+---
+
 ## Tabelas criadas no banco
 
 ### `dim_materiais`
@@ -432,10 +476,16 @@ Resultado esperado:
 [INFO] Arquivos tratados salvos com sucesso.
 [INFO] Carregando dados no banco SQLite...
 [INFO] Dados carregados com sucesso em: C:\Users\User\Documents\etl-estoque-hospitalar\database\estoque.db
-[INFO] Pipeline finalizado com sucesso.
+[INFO] Salvando métricas de execução...
+[INFO] Métricas salvas com sucesso em: C:\Users\User\Documents\etl-estoque-hospitalar\logs\metricas_execucao.csv
+[INFO] Pipeline finalizado.
 ```
 
-Após essa execução, os arquivos tratados serão gerados na pasta `data/processed/` e o banco `estoque.db` será criado ou atualizado dentro da pasta `database/`.
+Após essa execução:
+
+- os arquivos tratados serão gerados na pasta `data/processed/`;
+- o banco `estoque.db` será criado ou atualizado dentro da pasta `database/`;
+- o arquivo `metricas_execucao.csv` será criado ou atualizado dentro da pasta `logs/`.
 
 ---
 
@@ -502,6 +552,27 @@ Limpeza               saida     70
 Material hospitalar   entrada   650
 Material hospitalar   saida     440
 ```
+
+---
+
+## Métricas de execução
+
+O pipeline também gera um arquivo de métricas em:
+
+```text
+logs/metricas_execucao.csv
+```
+
+Esse arquivo permite acompanhar o histórico de execuções do pipeline.
+
+Exemplo de métrica registrada:
+
+```text
+data_hora_execucao,qtd_materiais_lidos,qtd_movimentacoes_lidas,qtd_materiais_tratados,qtd_movimentacoes_tratadas,qtd_materiais_abaixo_minimo,status_execucao
+2026-05-18 10:30:00,5,10,5,10,4,SUCESSO
+```
+
+Essa etapa ajuda a trazer mais rastreabilidade ao processo, permitindo acompanhar se o pipeline executou corretamente e quantos registros foram processados.
 
 ---
 
@@ -648,6 +719,23 @@ Depois disso, o script funcionou corretamente.
 
 ---
 
+## 5. Versionamento das melhorias
+
+Durante a evolução do projeto, foram feitos commits separados para registrar as melhorias.
+
+Entre as evoluções versionadas estão:
+
+- criação da camada `data/processed/`;
+- atualização do pipeline para gerar arquivos tratados;
+- atualização do README;
+- criação da pasta `logs/`;
+- criação do arquivo de métricas de execução;
+- atualização do pipeline para registrar métricas.
+
+Esse versionamento ajuda a demonstrar a evolução do projeto de forma organizada no GitHub.
+
+---
+
 ## Acertos do projeto
 
 Durante o desenvolvimento, foram concluídas com sucesso as seguintes etapas:
@@ -666,6 +754,10 @@ Durante o desenvolvimento, foram concluídas com sucesso as seguintes etapas:
 - Geração automática de arquivos CSV tratados.
 - Melhoria das mensagens de execução do pipeline com logs informativos.
 - Inclusão de validações adicionais, como tipos de movimentação inválidos e materiais não cadastrados.
+- Criação da pasta `logs/`.
+- Geração do arquivo `metricas_execucao.csv`.
+- Registro de métricas de execução do pipeline.
+- Versionamento das melhorias com Git/GitHub.
 
 ---
 
@@ -686,6 +778,8 @@ Este projeto demonstra conhecimentos iniciais e práticos em:
 - Resolução de problemas
 - Documentação técnica
 - Versionamento com Git/GitHub
+- Registro de métricas de execução
+- Rastreabilidade básica de pipeline
 
 ---
 
@@ -700,6 +794,9 @@ como padronização de textos, conversão de datas, remoção de duplicidades e 
 de estoque atual. Depois, os dados são validados, salvos em uma camada de dados
 tratados e carregados em um banco SQLite. Também criei consultas SQL para analisar
 materiais abaixo do estoque mínimo, saídas por setor e movimentações por categoria.
+Na evolução do projeto, adicionei uma camada simples de métricas de execução,
+registrando data e hora, quantidade de registros processados, materiais abaixo do
+estoque mínimo e status da execução.
 ```
 
 ---
@@ -717,6 +814,8 @@ Com este projeto, foi possível praticar:
 - Como salvar arquivos tratados em CSV.
 - Como salvar dados em banco SQLite.
 - Como consultar dados com SQL.
+- Como registrar métricas de execução.
+- Como acompanhar execuções do pipeline.
 - Como interpretar erros no terminal.
 - Como documentar um projeto para portfólio.
 - Como versionar melhorias com Git/GitHub.
@@ -729,14 +828,15 @@ Possíveis evoluções para este projeto:
 
 1. Adicionar mais dados ao CSV.
 2. Criar novas validações de qualidade.
-3. Criar métricas de execução do pipeline.
-4. Gerar logs em arquivo `.log`.
+3. Gerar logs em arquivo `.log`.
+4. Melhorar o tratamento de erros.
 5. Migrar o banco de SQLite para PostgreSQL.
 6. Criar dashboard no Power BI ou Looker Studio.
 7. Criar versão em cloud usando Google Cloud.
 8. Usar BigQuery como destino dos dados.
 9. Automatizar a execução do pipeline.
 10. Criar testes automatizados.
+11. Usar orquestração com Prefect ou Airflow.
 
 ---
 
@@ -745,13 +845,13 @@ Possíveis evoluções para este projeto:
 Pipeline executado com sucesso:
 
 ```text
-CSV bruto → Python/Pandas → Transformação → Validação → CSV tratado → SQLite → SQL
+CSV bruto → Python/Pandas → Transformação → Validação → CSV tratado → SQLite → SQL → Métricas
 ```
 
 Fluxo organizado em camadas:
 
 ```text
-data/raw → data/processed → database
+data/raw → data/processed → database → logs
 ```
 
 ---
