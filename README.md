@@ -783,24 +783,6 @@ Este projeto demonstra conhecimentos iniciais e práticos em:
 
 ---
 
-## Como explicar este projeto em uma entrevista
-
-Uma forma simples de apresentar o projeto:
-
-```text
-Desenvolvi um pipeline ETL em Python para simular um controle de estoque hospitalar.
-O processo extrai dados brutos de arquivos CSV, realiza transformações com Pandas,
-como padronização de textos, conversão de datas, remoção de duplicidades e cálculo
-de estoque atual. Depois, os dados são validados, salvos em uma camada de dados
-tratados e carregados em um banco SQLite. Também criei consultas SQL para analisar
-materiais abaixo do estoque mínimo, saídas por setor e movimentações por categoria.
-Na evolução do projeto, adicionei uma camada simples de métricas de execução,
-registrando data e hora, quantidade de registros processados, materiais abaixo do
-estoque mínimo e status da execução.
-```
-
----
-
 ## Aprendizados
 
 Com este projeto, foi possível praticar:
