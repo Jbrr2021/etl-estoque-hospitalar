@@ -1,6 +1,7 @@
-id_material,nome,categoria,data_validade,estoque_minimo
+﻿id_material,nome,categoria,data_validade,estoque_minimo
 1,Luva descartável,EPI,2026-08-10,100
 2,Seringa 10ml,Material hospitalar,2026-03-15,200
 3,Álcool 70,Limpeza,2025-12-20,50
 4,Máscara cirúrgica,EPI,2026-06-30,150
 5,Compressa estéril,Material hospitalar,2025-11-05,80
+6,Soro fisiológico 500ml,Soro,2028-02-17,100
