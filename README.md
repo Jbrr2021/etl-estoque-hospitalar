@@ -2,7 +2,7 @@
 
 Este projeto simula um pipeline ETL para controle de estoque hospitalar, utilizando Python, Pandas, SQLite e SQL.
 
-A ideia do projeto é praticar conceitos fundamentais da área de Dados, como extração, transformação, validação, organização em camadas, carga em banco de dados, consultas SQL para análise e registro de métricas de execução.
+A ideia do projeto é praticar conceitos fundamentais da área de Dados, como extração, transformação, validação, organização em camadas, carga em banco de dados, consultas SQL para análise, registro de métricas de execução e automação de cadastro e movimentações.
 
 O tema foi escolhido com base em uma experiência prática real em ambiente hospitalar, envolvendo controle de estoque, conferência de materiais, validade, entradas, saídas, organização de informações e apoio operacional.
 
@@ -22,7 +22,9 @@ O pipeline realiza as seguintes etapas:
 6. Salva os dados tratados na camada `data/processed/`.
 7. Carrega os dados tratados em um banco SQLite.
 8. Registra métricas de execução na pasta `logs/`.
-9. Executa consultas SQL para análise dos dados.
+9. Permite cadastrar novos materiais pelo terminal.
+10. Permite registrar movimentações de materiais existentes.
+11. Executa consultas SQL para análise dos dados.
 
 ---
 
@@ -52,11 +54,14 @@ etl-estoque-hospitalar/
 │       └── movimentacoes_tratadas.csv
 ├── database/
 │   └── estoque.db
+├── docs/
+│   └── apresentacao_projeto.md
 ├── logs/
 │   └── metricas_execucao.csv
 ├── sql/
 │   └── consultas.sql
 ├── src/
+│   ├── adicionar_material.py
 │   ├── pipeline.py
 │   └── verificar_banco.py
 ├── .gitignore
@@ -108,6 +113,18 @@ O banco contém as tabelas criadas pelo pipeline para consulta e análise dos da
 
 ---
 
+### `docs/`
+
+Contém documentos auxiliares do projeto.
+
+Arquivo:
+
+- `apresentacao_projeto.md`
+
+Esse arquivo reúne explicações sobre o projeto, aprendizados, dificuldades, perguntas prováveis e formas de apresentar o projeto em entrevistas ou conversas técnicas.
+
+---
+
 ### `logs/`
 
 Contém os registros de métricas de execução do pipeline.
@@ -138,6 +155,7 @@ Arquivos:
 
 - `pipeline.py`: executa o pipeline ETL completo.
 - `verificar_banco.py`: consulta o banco SQLite e exibe os resultados no terminal.
+- `adicionar_material.py`: permite cadastrar novos materiais e registrar movimentações de materiais existentes pelo terminal.
 
 ---
 
@@ -182,6 +200,8 @@ id_material,nome,categoria,data_validade,estoque_minimo
 3,Álcool 70,Limpeza,2025-12-20,50
 4,Máscara cirúrgica,EPI,2026-06-30,150
 5,Compressa estéril,Material hospitalar,2025-11-05,80
+6,Soro fisiológico 500ml,Soro,2028-02-17,100
+7,Dipirona 500 mg comprimido,Medicamento,2028-09-30,15000
 ```
 
 ---
@@ -213,6 +233,9 @@ id_movimentacao,id_material,data_movimentacao,tipo,quantidade,setor
 8,4,2026-01-20,saida,120,Centro Cirúrgico
 9,5,2026-01-09,entrada,150,Almoxarifado
 10,5,2026-01-22,saida,90,Enfermaria
+11,6,2026-02-17,entrada,3500,4 andar
+12,2,2026-05-19,saida,30,6 Andar
+13,7,2026-05-19,entrada,15000,CAF
 ```
 
 ---
@@ -343,10 +366,46 @@ Exemplo de estrutura do arquivo:
 
 ```csv
 data_hora_execucao,qtd_materiais_lidos,qtd_movimentacoes_lidas,qtd_materiais_tratados,qtd_movimentacoes_tratadas,qtd_materiais_abaixo_minimo,status_execucao
-2026-05-18 10:30:00,5,10,5,10,4,SUCESSO
+2026-05-19 10:30:00,7,13,7,13,4,SUCESSO
 ```
 
 Cada nova execução do pipeline adiciona uma nova linha ao arquivo de métricas.
+
+---
+
+## 7. Cadastro e movimentação pelo terminal
+
+A partir da Fase 4, o projeto passou a contar com o script:
+
+```text
+src/adicionar_material.py
+```
+
+Esse script permite interagir com os arquivos brutos do projeto sem editar manualmente os CSVs.
+
+Funcionalidades disponíveis:
+
+```text
+1 - Cadastrar novo material
+2 - Registrar movimentação de material existente
+3 - Sair
+```
+
+Com isso, é possível:
+
+- cadastrar um novo material no estoque;
+- gerar automaticamente um novo `id_material`;
+- registrar uma movimentação inicial;
+- registrar novas entradas ou saídas de materiais já existentes;
+- atualizar automaticamente os arquivos `materiais.csv` e `movimentacoes.csv`.
+
+Após usar esse script, o próximo passo é executar novamente o pipeline para recalcular o estoque, atualizar os arquivos tratados, atualizar o banco SQLite e registrar novas métricas.
+
+Fluxo da Fase 4:
+
+```text
+adicionar_material.py → data/raw → pipeline.py → data/processed → database → logs
+```
 
 ---
 
@@ -456,9 +515,50 @@ A versão pode mudar dependendo do ambiente.
 
 ---
 
-## 5. Executar o pipeline ETL
+## 5. Cadastrar novo material ou movimentação
 
-Execute:
+Para cadastrar um novo material ou registrar uma nova movimentação em um item já existente, execute:
+
+```bash
+python src/adicionar_material.py
+```
+
+O menu exibido será:
+
+```text
+1 - Cadastrar novo material
+2 - Registrar movimentação de material existente
+3 - Sair
+```
+
+Exemplo de uso para cadastrar um novo material:
+
+```text
+Nome do material: Dipirona 500 mg comprimido
+Categoria: 1 - Medicamento
+Data de validade: 2028-09-30
+Estoque mínimo: 15000
+Data da movimentação: 2026-05-19
+Tipo de movimentação: 1 - Entrada
+Quantidade movimentada: 15000
+Setor: CAF
+```
+
+Exemplo de uso para registrar saída de material existente:
+
+```text
+ID do material: 2
+Data da movimentação: 2026-05-19
+Tipo de movimentação: 2 - Saída
+Quantidade movimentada: 30
+Setor: 6 Andar
+```
+
+---
+
+## 6. Executar o pipeline ETL
+
+Após cadastrar ou movimentar dados, execute:
 
 ```bash
 python src/pipeline.py
@@ -489,7 +589,7 @@ Após essa execução:
 
 ---
 
-## 6. Verificar os dados carregados
+## 7. Verificar os dados carregados
 
 Execute:
 
@@ -514,12 +614,14 @@ estoque_atual
 Resultado da tabela de estoque atual:
 
 ```text
-nome                 categoria             estoque_atual   estoque_minimo   abaixo_minimo
-Luva descartável      EPI                  220             100              0
-Seringa 10ml          Material hospitalar  150             200              1
-Álcool 70             Limpeza              30              50               1
-Máscara cirúrgica     EPI                  130             150              1
-Compressa estéril     Material hospitalar  60              80               1
+nome                         categoria             estoque_atual   estoque_minimo   abaixo_minimo
+Luva descartável              EPI                  220             100              0
+Seringa 10ml                  Material hospitalar  120             200              1
+Álcool 70                     Limpeza              30              50               1
+Máscara cirúrgica             EPI                  130             150              1
+Compressa estéril             Material hospitalar  60              80               1
+Soro fisiológico 500ml        Soro                 3500            100              0
+Dipirona 500 mg comprimido    Medicamento          15000           15000            0
 ```
 
 Materiais identificados abaixo do estoque mínimo:
@@ -539,6 +641,7 @@ Emergência          350
 Enfermaria          170
 Centro Cirúrgico    120
 Higienização        70
+6 Andar             30
 ```
 
 Movimentações por categoria:
@@ -550,7 +653,9 @@ EPI                   saida     200
 Limpeza               entrada   100
 Limpeza               saida     70
 Material hospitalar   entrada   650
-Material hospitalar   saida     440
+Material hospitalar   saida     470
+Medicamento           entrada   15000
+Soro                  entrada   3500
 ```
 
 ---
@@ -569,7 +674,7 @@ Exemplo de métrica registrada:
 
 ```text
 data_hora_execucao,qtd_materiais_lidos,qtd_movimentacoes_lidas,qtd_materiais_tratados,qtd_movimentacoes_tratadas,qtd_materiais_abaixo_minimo,status_execucao
-2026-05-18 10:30:00,5,10,5,10,4,SUCESSO
+2026-05-19 10:30:00,7,13,7,13,4,SUCESSO
 ```
 
 Essa etapa ajuda a trazer mais rastreabilidade ao processo, permitindo acompanhar se o pipeline executou corretamente e quantos registros foram processados.
@@ -719,7 +824,29 @@ Depois disso, o script funcionou corretamente.
 
 ---
 
-## 5. Versionamento das melhorias
+## 5. Git sem arquivos adicionados
+
+Em alguns momentos, o comando `git commit` foi executado antes de adicionar os arquivos com:
+
+```bash
+git add .
+```
+
+O Git informou que não havia mudanças preparadas para commit.
+
+Solução aplicada:
+
+Executar:
+
+```bash
+git add .
+git commit -m "mensagem do commit"
+git push
+```
+
+---
+
+## 6. Versionamento das melhorias
 
 Durante a evolução do projeto, foram feitos commits separados para registrar as melhorias.
 
@@ -730,7 +857,10 @@ Entre as evoluções versionadas estão:
 - atualização do README;
 - criação da pasta `logs/`;
 - criação do arquivo de métricas de execução;
-- atualização do pipeline para registrar métricas.
+- atualização do pipeline para registrar métricas;
+- criação do script `adicionar_material.py`;
+- cadastro automatizado de materiais;
+- registro de movimentações de materiais existentes.
 
 Esse versionamento ajuda a demonstrar a evolução do projeto de forma organizada no GitHub.
 
@@ -757,6 +887,9 @@ Durante o desenvolvimento, foram concluídas com sucesso as seguintes etapas:
 - Criação da pasta `logs/`.
 - Geração do arquivo `metricas_execucao.csv`.
 - Registro de métricas de execução do pipeline.
+- Criação do script `adicionar_material.py`.
+- Cadastro de novos materiais pelo terminal.
+- Registro de entradas e saídas de materiais existentes.
 - Versionamento das melhorias com Git/GitHub.
 
 ---
@@ -780,6 +913,8 @@ Este projeto demonstra conhecimentos iniciais e práticos em:
 - Versionamento com Git/GitHub
 - Registro de métricas de execução
 - Rastreabilidade básica de pipeline
+- Automação de cadastro e movimentações
+- Manipulação de arquivos CSV
 
 ---
 
@@ -798,6 +933,8 @@ Com este projeto, foi possível praticar:
 - Como consultar dados com SQL.
 - Como registrar métricas de execução.
 - Como acompanhar execuções do pipeline.
+- Como automatizar cadastro de novos materiais.
+- Como registrar movimentações de materiais existentes.
 - Como interpretar erros no terminal.
 - Como documentar um projeto para portfólio.
 - Como versionar melhorias com Git/GitHub.
@@ -812,13 +949,17 @@ Possíveis evoluções para este projeto:
 2. Criar novas validações de qualidade.
 3. Gerar logs em arquivo `.log`.
 4. Melhorar o tratamento de erros.
-5. Migrar o banco de SQLite para PostgreSQL.
-6. Criar dashboard no Power BI ou Looker Studio.
-7. Criar versão em cloud usando Google Cloud.
-8. Usar BigQuery como destino dos dados.
-9. Automatizar a execução do pipeline.
-10. Criar testes automatizados.
-11. Usar orquestração com Prefect ou Airflow.
+5. Validar saldo antes de permitir uma saída.
+6. Criar alerta para materiais abaixo do estoque mínimo.
+7. Criar alerta para materiais próximos do vencimento.
+8. Migrar o banco de SQLite para PostgreSQL.
+9. Criar dashboard no Power BI ou Looker Studio.
+10. Criar versão em cloud usando Google Cloud.
+11. Usar BigQuery como destino dos dados.
+12. Automatizar a execução do pipeline.
+13. Criar testes automatizados.
+14. Usar orquestração com Prefect ou Airflow.
+15. Adaptar o projeto para dados reais anonimizados de medicamentos e soros.
 
 ---
 
@@ -827,13 +968,13 @@ Possíveis evoluções para este projeto:
 Pipeline executado com sucesso:
 
 ```text
-CSV bruto → Python/Pandas → Transformação → Validação → CSV tratado → SQLite → SQL → Métricas
+Cadastro/Movimentação → CSV bruto → Python/Pandas → Transformação → Validação → CSV tratado → SQLite → SQL → Métricas
 ```
 
 Fluxo organizado em camadas:
 
 ```text
-data/raw → data/processed → database → logs
+src/adicionar_material.py → data/raw → data/processed → database → logs
 ```
 
 ---
